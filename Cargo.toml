@@ -14,3 +14,4 @@ reqwest = { version = "0.10", features = ["json"] }
 tokio = { version = "0.2", features = ["full"] }
 toml = "0.5"
 serde = { version = "1.0", features = ["derive"] }
+varlink = "10.0.0"
