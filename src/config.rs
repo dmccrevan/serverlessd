@@ -3,11 +3,16 @@ use std::fs;
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
+    pub provider: String,
+    pub cloudflare: Option<CloudFlareConfig>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CloudFlareConfig {
     pub email: Option<String>,
     pub api_key: Option<String>,
     pub account_number: Option<String>,
 }
-
 
 pub fn build_config() -> Config {
     let mut cfg_str = String::from("");

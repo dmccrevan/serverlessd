@@ -19,14 +19,13 @@ fn main() {
 
     info!("Starting up serverlessd...");
 
-    
     let daemon = Daemonize::new();
     match daemon.start() {
         Ok(_) => info!("Successfully daemonized, de-attached from shell, running in background..."),
         Err(e) => error!("Error while daemonizing: {}", e),
     };
-
-    match providers::cloudflare::download_worker(cfg, String::from("dan")) {
+    
+    match providers::cloudflare::download_worker(cfg.cloudflare.unwrap(), String::from("dan")) {
         Ok(body) => {
             info!("Body: {}\n", body);
             let mut f = File::create("/tmp/tmp.txt").expect("Unable to create file");
