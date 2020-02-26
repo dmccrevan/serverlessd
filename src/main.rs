@@ -5,6 +5,7 @@ use std::io::Write;
 
 mod providers;
 mod config;
+mod service;
 
 fn setup_logger() {
     let logger = fern::Dispatch::new()
@@ -19,12 +20,16 @@ fn main() {
 
     info!("Starting up serverlessd...");
 
+    service::run_server();
+
     let daemon = Daemonize::new();
+
     match daemon.start() {
         Ok(_) => info!("Successfully daemonized, de-attached from shell, running in background..."),
         Err(e) => error!("Error while daemonizing: {}", e),
     };
     
+    /*
     match providers::cloudflare::download_worker(cfg.cloudflare.unwrap(), String::from("dan")) {
         Ok(body) => {
             info!("Body: {}\n", body);
@@ -32,5 +37,5 @@ fn main() {
             f.write_all(body.as_bytes()).expect("Unable to write data");
        },
         Err(e) => error!("Err {}", e),
-    };
+    };*/
 }

@@ -1,9 +1,0 @@
-interface io.serverlessd
-
-type Response (
-    succeeded: bool,
-    Msg: string,
-    Body: string
-)
-
-method download_worker(script_name: string) -> (resp: Response)

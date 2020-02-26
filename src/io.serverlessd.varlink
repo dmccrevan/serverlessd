@@ -1,0 +1,9 @@
+interface io.serverlessd
+
+type Response (
+    succeeded: bool,
+    msg: string,
+    body: string
+)
+
+method DownloadWorker(scriptName: string) -> (resp: Response)
