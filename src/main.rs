@@ -20,8 +20,9 @@ fn main() {
 
     info!("Starting up serverlessd...");
 
-    service::run_server();
+    service::run_server("tcp:127.0.0.1:12345");
 
+    /*
     let daemon = Daemonize::new();
 
     match daemon.start() {
@@ -29,7 +30,7 @@ fn main() {
         Err(e) => error!("Error while daemonizing: {}", e),
     };
     
-    /*
+    
     match providers::cloudflare::download_worker(cfg.cloudflare.unwrap(), String::from("dan")) {
         Ok(body) => {
             info!("Body: {}\n", body);
