@@ -3,7 +3,10 @@ use varlink::{Connection, OrgVarlinkServiceInterface, VarlinkService};
 use varlink_derive;
 use std::{thread, time};
 
+use crate::providers;
+use crate::config;
 use crate::service::io_serverlessd::VarlinkClientInterface;
+
 
 varlink_derive::varlink_file!(
     io_serverlessd,
@@ -13,34 +16,35 @@ varlink_derive::varlink_file!(
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 struct ServerlessDState {
-    pub status: Arc<RwLock<i32>>,
+    pub cfg: config::Config,
+    //pub cfg: Arc<RwLock<config::Config>>,
 }
 
 impl io_serverlessd::VarlinkInterface for ServerlessDState {
     fn download_worker(
         &self,
         call: &mut dyn io_serverlessd::Call_DownloadWorker,
-        scriptName: String
+        script_name: String
     )-> varlink::Result<()> {
-        let test = String::from("test");
-        match scriptName {
-            test => call.reply(io_serverlessd::Response{
+        let cfg = self.cfg.clone();
+        match providers::cloudflare::download_worker(cfg.cloudflare.unwrap(), script_name) {
+            Ok(body) => call.reply(io_serverlessd::Response{
                 succeeded: true,
-                msg: "a".into(),
-                body: "a".into(),
+                msg: "Download script successfully".into(), 
+                body: body
             }),
-            _ => call.reply(io_serverlessd::Response{
-                succeeded: true,
-                msg: "b".into(),
-                body: "b".into(),
-            }),
+            Err(e) => call.reply(io_serverlessd::Response{
+                succeeded: false,
+                msg: "Failed to download script".into(),
+                body: "".into()
+            })
         }
     } 
 }
 
 pub fn run_client(conn: Arc<RwLock<varlink::Connection>>) {
     let mut iface = io_serverlessd::VarlinkClient::new(conn);
-    match iface.download_worker("test".to_string()).call() {
+    match iface.download_worker("dan".to_string()).call() {
         Ok(io_serverlessd::DownloadWorker_Reply {
             resp:
                 io_serverlessd::Response {
@@ -54,8 +58,8 @@ pub fn run_client(conn: Arc<RwLock<varlink::Connection>>) {
 }
 
 pub fn run_server(address: &str) -> varlink::Result<()> {
-    let status = Arc::new(RwLock::new(0));
-    let stream = ServerlessDState{status};
+    let cfg = config::build_config();
+    let stream = ServerlessDState{cfg};
     let my_interface = io_serverlessd::new(Box::new(stream));
     let service = VarlinkService::new(
         "serverlessd",

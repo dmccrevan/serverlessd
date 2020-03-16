@@ -1,13 +1,13 @@
 use serde::Deserialize;
 use std::fs;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct Config {
     pub provider: String,
     pub cloudflare: Option<CloudFlareConfig>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct CloudFlareConfig {
     pub email: Option<String>,
     pub api_key: Option<String>,
