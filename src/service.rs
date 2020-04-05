@@ -1,5 +1,5 @@
 use std::sync::{Arc, RwLock};
-use varlink::{Connection, OrgVarlinkServiceInterface, VarlinkService};
+use varlink::{Connection, VarlinkService};
 use varlink_derive;
 use std::{thread, time};
 
@@ -13,11 +13,8 @@ varlink_derive::varlink_file!(
     "src/io.serverlessd.varlink"
 );
 
-pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
-
 struct ServerlessDState {
     pub cfg: config::Config,
-    //pub cfg: Arc<RwLock<config::Config>>,
 }
 
 impl io_serverlessd::VarlinkInterface for ServerlessDState {
@@ -26,8 +23,7 @@ impl io_serverlessd::VarlinkInterface for ServerlessDState {
         call: &mut dyn io_serverlessd::Call_DownloadWorker,
         script_name: String
     )-> varlink::Result<()> {
-        let cfg = self.cfg.clone();
-        match providers::cloudflare::download_worker(cfg.cloudflare.unwrap(), script_name) {
+        match providers::cloudflare::download_worker(self.cfg.clone().cloudflare.unwrap(), script_name) {
             Ok(body) => call.reply(io_serverlessd::Response{
                 succeeded: true,
                 msg: "Download script successfully".into(), 
@@ -35,26 +31,11 @@ impl io_serverlessd::VarlinkInterface for ServerlessDState {
             }),
             Err(e) => call.reply(io_serverlessd::Response{
                 succeeded: false,
-                msg: "Failed to download script".into(),
+                msg: e.to_string(),
                 body: "".into()
             })
         }
     } 
-}
-
-pub fn run_client(conn: Arc<RwLock<varlink::Connection>>) {
-    let mut iface = io_serverlessd::VarlinkClient::new(conn);
-    match iface.download_worker("dan".to_string()).call() {
-        Ok(io_serverlessd::DownloadWorker_Reply {
-            resp:
-                io_serverlessd::Response {
-                    succeeded: true,
-                    msg: ref m,
-                    body: ref b,
-                }
-        }) => println!("Success: {:?} {:?}", m, b),
-        res => panic!("Unknown result {:?}", res),
-    }
 }
 
 pub fn run_server(address: &str) -> varlink::Result<()> {
@@ -78,10 +59,25 @@ pub fn run_server(address: &str) -> varlink::Result<()> {
     Ok(())
 }
 
+// run_client is a testing client function to run rudimentary API calls to my server
+pub fn run_client(conn: Arc<RwLock<varlink::Connection>>) {
+    let mut iface = io_serverlessd::VarlinkClient::new(conn);
+    match iface.download_worker("dan".to_string()).call() {
+        Ok(io_serverlessd::DownloadWorker_Reply {
+            resp:
+                io_serverlessd::Response {
+                    succeeded: true,
+                    msg: ref m,
+                    body: ref b,
+                }
+        }) => println!("Success: {:?} {:?}", m, b),
+        res => panic!("Unknown result {:?}", res),
+    }
+}
 
 
 #[test]
-fn client_server_test() -> Result<()> { 
+fn client_server_test() -> varlink::Result<()> { 
     let address = "tcp:127.0.0.1:12345";
     let client_address = "tcp:127.0.0.1:12345";
     let child = thread::spawn(move || {
