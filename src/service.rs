@@ -1,4 +1,5 @@
 use std::sync::{Arc, RwLock};
+use log::{error};
 use varlink::{Connection, VarlinkService};
 use varlink_derive;
 use std::{thread, time};
@@ -36,6 +37,25 @@ impl io_serverlessd::VarlinkInterface for ServerlessDState {
             })
         }
     } 
+    fn upload_worker(
+        &self,
+        call: &mut dyn io_serverlessd::Call_UploadWorker,
+        script_name: String,
+        script: String
+    ) -> varlink::Result<()> {
+        match providers::cloudflare::upload_worker(self.cfg.clone().cloudflare.unwrap(), script_name, script) {
+            Ok(body) => call.reply(io_serverlessd::Response{
+                succeeded: true,
+                msg: "Successfully uploaded script".into(),
+                body: body
+            }),
+            Err(e) => call.reply(io_serverlessd::Response{
+                succeeded: false,
+                msg: e.to_string(),
+                body: "".into()
+            })
+        }
+    }
 }
 
 pub fn run_server(address: &str) -> varlink::Result<()> {
@@ -62,7 +82,20 @@ pub fn run_server(address: &str) -> varlink::Result<()> {
 // run_client is a testing client function to run rudimentary API calls to my server
 pub fn run_client(conn: Arc<RwLock<varlink::Connection>>) {
     let mut iface = io_serverlessd::VarlinkClient::new(conn);
-    match iface.download_worker("dan".to_string()).call() {
+    let script_name = String::from("serverless-d-test");
+    let script = String::from("addEventListener('fetch', event => { event.respondWith(fetch(event.request)) })");
+    match iface.upload_worker(script_name.clone(), script).call() {
+        Ok(io_serverlessd::UploadWorker_Reply {
+            resp:
+                io_serverlessd::Response {
+                    succeeded: ref s,
+                    msg: ref m,
+                    body: ref b,
+                }
+        }) => println!("Varlink Response: {} {} {}", s, m, b),
+        res => error!("Unknown response: {:?}", res), 
+    }
+    match iface.download_worker(script_name).call() {
         Ok(io_serverlessd::DownloadWorker_Reply {
             resp:
                 io_serverlessd::Response {
@@ -71,7 +104,7 @@ pub fn run_client(conn: Arc<RwLock<varlink::Connection>>) {
                     body: ref b,
                 }
         }) => println!("Success: {:?} {:?}", m, b),
-        res => panic!("Unknown result {:?}", res),
+        res => error!("Unknown result {:?}", res),
     }
 }
 
