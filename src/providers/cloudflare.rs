@@ -50,3 +50,18 @@ pub async fn delete_worker(cfg: config::CloudFlareConfig, script_name: String) -
     let body = resp.text().await?;
     Ok(body)
 }
+
+#[tokio::main]
+pub async fn list_workers(cfg: config::CloudFlareConfig) -> Result<String, reqwest::Error> {
+    let url = format!("https://api.cloudflare.com/client/v4/accounts/{}/workers/scripts", cfg.account_number.unwrap());
+    let client = reqwest::Client::new();
+    debug!("Sending GET request to download worker script from cloudflare");
+    let resp = client
+        .get(&url)
+        .header("X-Auth-Email", cfg.email.unwrap())
+        .header("X-Auth-Key", cfg.api_key.unwrap())
+        .send()
+        .await?;
+    let body = resp.text().await?;
+    Ok(body)
+}

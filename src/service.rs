@@ -74,6 +74,23 @@ impl io_serverlessd::VarlinkInterface for ServerlessDState {
             })
         }
     }
+    fn list_workers(
+        &self,
+        call: &mut dyn io_serverlessd::Call_ListWorkers,
+    ) -> varlink::Result<()> {
+        match providers::cloudflare::list_workers(self.cfg.clone().cloudflare.unwrap()) {
+            Ok(body) => call.reply(io_serverlessd::Response{
+                succeeded: true,
+                msg: "Successfully got list of workers".into(),
+                body: body
+            }),
+            Err(e) => call.reply(io_serverlessd::Response{
+                succeeded: false,
+                msg: e.to_string(),
+                body: "".into()
+            })
+        }
+    }
 }
 
 pub fn run_server(address: &str) -> varlink::Result<()> {
@@ -112,6 +129,17 @@ pub fn run_client(conn: Arc<RwLock<varlink::Connection>>) {
                 }
         }) => println!("Varlink Response: {} {} {}", s, m, b),
         res => error!("Unknown response: {:?}", res), 
+    }
+    match iface.list_workers().call() {
+        Ok(io_serverlessd::ListWorkers_Reply{
+            resp:
+                io_serverlessd::Response {
+                    succeeded: true,
+                    msg: ref m,
+                    body: ref b,
+                }
+        }) => println!("Success: {:?} {:?}", m, b),
+        res => error!("Unknown result {:?}", res),
     }
     match iface.download_worker(script_name.clone()).call() {
         Ok(io_serverlessd::DownloadWorker_Reply {
