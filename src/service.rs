@@ -56,6 +56,24 @@ impl io_serverlessd::VarlinkInterface for ServerlessDState {
             })
         }
     }
+    fn delete_worker(
+        &self,
+        call: &mut dyn io_serverlessd::Call_DeleteWorker,
+        script_name: String
+    ) -> varlink::Result<()> {
+        match providers::cloudflare::delete_worker(self.cfg.clone().cloudflare.unwrap(), script_name) {
+            Ok(body) => call.reply(io_serverlessd::Response{
+                succeeded: true,
+                msg: "Successfully deleted script".into(),
+                body: body
+            }),
+            Err(e) => call.reply(io_serverlessd::Response{
+                succeeded: false,
+                msg: e.to_string(),
+                body: "".into()
+            })
+        }
+    }
 }
 
 pub fn run_server(address: &str) -> varlink::Result<()> {
@@ -94,6 +112,28 @@ pub fn run_client(conn: Arc<RwLock<varlink::Connection>>) {
                 }
         }) => println!("Varlink Response: {} {} {}", s, m, b),
         res => error!("Unknown response: {:?}", res), 
+    }
+    match iface.download_worker(script_name.clone()).call() {
+        Ok(io_serverlessd::DownloadWorker_Reply {
+            resp:
+                io_serverlessd::Response {
+                    succeeded: true,
+                    msg: ref m,
+                    body: ref b,
+                }
+        }) => println!("Success: {:?} {:?}", m, b),
+        res => error!("Unknown result {:?}", res),
+    }
+    match iface.delete_worker(script_name.clone()).call() {
+        Ok(io_serverlessd::DeleteWorker_Reply {
+            resp:
+                io_serverlessd::Response {
+                    succeeded: true,
+                    msg: ref m,
+                    body: ref b,
+                }
+        }) => println!("Success: {:?} {:?}", m, b),
+        res => error!("Unknown result {:?}", res),
     }
     match iface.download_worker(script_name).call() {
         Ok(io_serverlessd::DownloadWorker_Reply {

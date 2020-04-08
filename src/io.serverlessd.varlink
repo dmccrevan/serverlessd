@@ -8,3 +8,4 @@ type Response (
 
 method DownloadWorker(scriptName: string) -> (resp: Response)
 method UploadWorker(scriptName: string, script: string) -> (resp: Response)
+method DeleteWorker(scriptName: string) -> (resp: Response)
