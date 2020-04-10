@@ -1,5 +1,5 @@
 use serde::Deserialize;
-use std::fs;
+use std::{env, fs, path};
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct Config {
@@ -14,11 +14,34 @@ pub struct CloudFlareConfig {
     pub account_number: Option<String>,
 }
 
-pub fn build_config() -> Config {
-    let mut cfg_str = String::from("");
-    if std::path::Path::new("/etc/serverlessd/config").exists() {
-        cfg_str = fs::read_to_string("/etc/serverlessd/config").expect("Something went wrong reading the file");
+fn get_config_file() -> Result<path::PathBuf, &'static str> {
+    match env::home_dir() {
+        Some(p) => {
+            let cfg_path = p.join(".config/serverlessd/config");
+            if cfg_path.exists() {
+                Ok(cfg_path)
+            } else {
+                Err("Config file does not exist, config file must be located at ~/.config/serverlessd/config")
+            }
+        }
+        None => Err("Home directory could not be found"),
     }
-    let cfg: Config = toml::from_str(cfg_str.as_ref()).unwrap();
-    cfg
+}
+
+pub fn build_config() -> Result<Config, &'static str> {
+    match get_config_file() {
+        Ok(p) => {
+            let cfg_str = fs::read_to_string(p).expect("Something went wrong reading the file");
+            Ok(toml::from_str(cfg_str.as_ref()).unwrap())
+        }
+        Err(e) => Err(e),
+    }
+}
+
+#[test]
+fn get_config_file_test() {
+    match get_config_file() {
+        Ok(p) => println!("Found config: {:?}", p),
+        Err(e) => println!("Error: {:?}", e),
+    };
 }
