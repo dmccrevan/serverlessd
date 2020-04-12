@@ -14,17 +14,26 @@ pub struct CloudFlareConfig {
     pub account_number: Option<String>,
 }
 
+fn get_global_config_file() -> Result<path::PathBuf, &'static str> {
+    let cfg_path = path::PathBuf::from("/etc/serverlessd/config");
+    if cfg_path.exists() {
+        Ok(cfg_path)
+    } else {
+        Err("Config file does not exist, config file must be located at ~/.config/serverless/config or /etc/serverlessd/config")
+    }
+}
+
 fn get_config_file() -> Result<path::PathBuf, &'static str> {
     match env::home_dir() {
         Some(p) => {
-            let cfg_path = p.join(".config/serverlessd/config");
+            let mut cfg_path = p.join(".config/serverlessd/config");
             if cfg_path.exists() {
                 Ok(cfg_path)
             } else {
-                Err("Config file does not exist, config file must be located at ~/.config/serverlessd/config")
+                get_global_config_file()
             }
         }
-        None => Err("Home directory could not be found"),
+        None => get_global_config_file(),
     }
 }
 
