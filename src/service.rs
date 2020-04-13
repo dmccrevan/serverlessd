@@ -132,44 +132,44 @@ pub fn run_client(conn: Arc<RwLock<varlink::Connection>>) {
         Ok(io_serverlessd::ListWorkers_Reply {
             resp:
                 io_serverlessd::Response {
-                    succeeded: true,
+                    succeeded: ref s,
                     msg: ref m,
                     body: ref b,
                 },
-        }) => println!("Success: {:?} {:?}", m, b),
+        }) => println!("Varlink Response: {} {} {}", s, m, b),
         res => error!("Unknown result {:?}", res),
     }
     match iface.download_worker(script_name.clone()).call() {
         Ok(io_serverlessd::DownloadWorker_Reply {
             resp:
                 io_serverlessd::Response {
-                    succeeded: true,
+                    succeeded: ref s,
                     msg: ref m,
                     body: ref b,
                 },
-        }) => println!("Success: {:?} {:?}", m, b),
+        }) => println!("Varlink Response: {} {} {}", s, m, b),
         res => error!("Unknown result {:?}", res),
     }
     match iface.delete_worker(script_name.clone()).call() {
         Ok(io_serverlessd::DeleteWorker_Reply {
             resp:
                 io_serverlessd::Response {
-                    succeeded: true,
+                    succeeded: ref s,
                     msg: ref m,
                     body: ref b,
                 },
-        }) => println!("Success: {:?} {:?}", m, b),
+        }) => println!("Varlink Response: {} {} {}", s, m, b),
         res => error!("Unknown result {:?}", res),
     }
     match iface.download_worker(script_name).call() {
         Ok(io_serverlessd::DownloadWorker_Reply {
             resp:
                 io_serverlessd::Response {
-                    succeeded: true,
+                    succeeded: ref s,
                     msg: ref m,
                     body: ref b,
                 },
-        }) => println!("Success: {:?} {:?}", m, b),
+        }) => println!("Varlink Response: {} {} {}", s, m, b),
         res => error!("Unknown result {:?}", res),
     }
 }
