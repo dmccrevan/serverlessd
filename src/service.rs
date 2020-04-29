@@ -174,7 +174,7 @@ pub fn run_client(conn: Arc<RwLock<varlink::Connection>>) {
     }
 }
 
-#[test]
+//#[test]
 fn client_server_test() -> varlink::Result<()> {
     let address = "tcp:127.0.0.1:12345";
     let client_address = "tcp:127.0.0.1:12345";
