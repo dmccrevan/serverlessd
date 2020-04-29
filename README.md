@@ -1,4 +1,5 @@
 # Serverlessd
+![build](https://github.com/dmccrevan/serverlessd/workflows/Rust/badge.svg?branch=master) 
 
 Serverlessd is an open source unix daemon that will allow communication between a local machine and various serverless providers.
 
